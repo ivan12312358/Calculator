@@ -14,15 +14,29 @@
 }													\
 
 
+
+// In general it is not a good practice to do so (exit failures) from constructor. You
+// could throw an exception, but for no just do not do any callocs in constructors, just construct
+// object without all that stuff and then use functions.
 Calc::Calc (char* filename)
 {
 	char* sym = nullptr;
 	int   sym_cnt = read (&sym, filename);
+	if (sym_cnt < 0) {
+		// either return -1 or exit
+		// It is way better to return error and handle it in function which called calc
+		exit(EXIT_FAILURE);
+	}
 
 	char** str = (char**)calloc(sym_cnt, sizeof(char*));
+	if (str == NULL) {
+		exit(EXIT_FAILURE);
+	}
 	int str_cnt = split(str, sym);
+	
 
 	symbols = (char*)calloc(sym_cnt, sizeof(char*));
+	// if(...) and stuff
 
 	Create_Expession(str, str_cnt - 1);
 
@@ -56,6 +70,7 @@ double Calc::GetE ()
 		char operator_ = symbols[counter++];
 
 		double tmp_res = GetT ();
+		//tmp_res?
 
 		if(operator_ == '+')
 			result += tmp_res;
@@ -199,6 +214,8 @@ void Create_Expession(char** str, int str_cnt)
 {
 	char** variables = (char**)calloc(str_cnt, sizeof(char*));
 	char** values = (char**)calloc(str_cnt, sizeof(char*));
+	// if (variables == NULL) ...
+
 
 	int var_cnt = 0;
 

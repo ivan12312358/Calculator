@@ -42,6 +42,8 @@ void scan (FILE* fin_)
 
 //-------------------------------------------------------------------------------
 
+
+// this should be function from Onegin library, not in this translation unit
 int read (char** symbols, const char* filename)
 {
 	FILE* base = fopen (filename, "r");
@@ -49,7 +51,8 @@ int read (char** symbols, const char* filename)
 	if(base == nullptr)
 	{
 		printf ("Couldn't find file\n");
-		return 0;
+		// Maybe returning an error is way better
+		return -1;
 	}
 
 	fseek (base, 0, SEEK_END);
