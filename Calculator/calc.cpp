@@ -6,37 +6,40 @@
 
 #define COMPARE(func, symb)							\
 {													\
-	if(!strncmp(symbols + counter, #func, symb))	\
+	if (!strncmp(symbols + counter, #func, symb))	\
 	{												\
 		counter += symb;							\
 		return func;								\
 	}												\
 }													\
 
-
-
-// In general it is not a good practice to do so (exit failures) from constructor. You
-// could throw an exception, but for no just do not do any callocs in constructors, just construct
-// object without all that stuff and then use functions.
 Calc::Calc (char* filename)
 {
 	char* sym = nullptr;
 	int   sym_cnt = read (&sym, filename);
-	if (sym_cnt < 0) {
-		// either return -1 or exit
-		// It is way better to return error and handle it in function which called calc
+
+	if (sym_cnt < 0)
+	{
+		printf("Empty file\n");
 		exit(EXIT_FAILURE);
 	}
 
 	char** str = (char**)calloc(sym_cnt, sizeof(char*));
+
 	if (str == NULL) {
 		exit(EXIT_FAILURE);
 	}
+
 	int str_cnt = split(str, sym);
-	
 
 	symbols = (char*)calloc(sym_cnt, sizeof(char*));
-	// if(...) and stuff
+
+	if (!symbols) 
+	{
+		printf("Empty file\n");
+		exit(EXIT_FAILURE);
+	}
+
 
 	Create_Expession(str, str_cnt - 1);
 
@@ -55,7 +58,7 @@ double Calc::GetG ()
 {
 	double result = GetE ();
 
-	if(symbols[counter] != '\0')
+	if (symbols[counter] != '\0')
 		error = 1;
 
 	return result;	
@@ -65,17 +68,16 @@ double Calc::GetE ()
 {
 	double result = GetT ();
 
-	while(symbols[counter] == '+' || symbols[counter] == '-')
+	while (symbols[counter] == '+' || symbols[counter] == '-')
 	{
 		char operator_ = symbols[counter++];
 
-		double tmp_res = GetT ();
-		//tmp_res?
+		double result_ = GetT ();
 
-		if(operator_ == '+')
-			result += tmp_res;
+		if (operator_ == '+')
+			result += result_;
 		else 
-			result -= tmp_res;
+			result -= result_;
 	}
 
 	return result;
@@ -85,16 +87,16 @@ double Calc::GetT ()
 {
 	double result = GetQ ();
 
-	while(symbols[counter] == '*' || symbols[counter] == '/')
+	while (symbols[counter] == '*' || symbols[counter] == '/')
 	{
 		char operator_ = symbols[counter++];
 
-		double tmp_res = GetQ ();
+		double result_ = GetQ ();
 
-		if(operator_ == '*')
-			result *= tmp_res;
+		if (operator_ == '*')
+			result *= result_;
 		else 
-			result /= tmp_res;
+			result /= result_;
 	}
 
 	return result;
@@ -104,12 +106,12 @@ double Calc::GetQ ()
 {
 	double result = GetF ();
 
-	while(symbols[counter] == '^')
+	while (symbols[counter] == '^')
 	{
 		counter++;
 		result = pow(result, GetQ ());
 
-		if(errno == EDOM || errno == ERANGE)
+		if (errno == EDOM || errno == ERANGE)
 			perror("Error");
 	}
 
@@ -122,11 +124,11 @@ double Calc::GetF ()
 
 	int function = 0;
 
-	while((function = Math_Func ()))
+	while ((function = Math_Func ()))
 	{
 		result = Call_Func (function, GetP ());
 
-		if(errno == EDOM || errno == ERANGE)
+		if (errno == EDOM || errno == ERANGE)
 			perror("Error");
 	}
 
@@ -137,31 +139,29 @@ double Calc::GetP ()
 {
 	double result = 0;
 
-	if(symbols[counter] == '(')
+	if (symbols[counter] == '(')
 	{
 		counter++;
 		result = GetE ();
 
-		if(symbols[counter++] != ')')
+		if (symbols[counter++] != ')')
 			error = 1;
 	}
-	else if(symbols[counter] == '-')
+	else if (symbols[counter] == '-')
 	{
 		counter++;
 
-		if(symbols[counter] == '(')
+		if (symbols[counter] == '(')
 		{
 			counter++;
 			result = -GetE ();
 
-			if(symbols[counter++] != ')')
+			if (symbols[counter++] != ')')
 				error = 1;
 		}
-		else
-			result = -GetF ();
+		else result = -GetF ();
 	}
-	else
-		result = GetN ();
+	else result = GetN ();
 
 	return result;
 }
@@ -171,7 +171,7 @@ double Calc::GetN ()
 	char digit[128];
 	int  size = 0;
 
-	while((counter < 128 && symbols[counter] >= '0' && symbols[counter] <= '9') || symbols[counter] == '.')
+	while ((counter < 128 && symbols[counter] >= '0' && symbols[counter] <= '9') || symbols[counter] == '.')
 		digit[size++] = symbols[counter++];
 
 	digit[size++] = '\0';
@@ -213,15 +213,19 @@ double Call_Func (int func, double tmp_res)
 void Create_Expession(char** str, int str_cnt)
 {
 	char** variables = (char**)calloc(str_cnt, sizeof(char*));
-	char** values = (char**)calloc(str_cnt, sizeof(char*));
-	// if (variables == NULL) ...
+	char** values 	 = (char**)calloc(str_cnt, sizeof(char*));
 
+	if (!variables || !values)
+	{
+		printf("Memory allocation error\n");
+		return;
+	}
 
 	int var_cnt = 0;
 
 	for(int i = 0; i < str_cnt; i++)
 	{
-		if(i % 2 == 0)
+		if (i % 2 == 0)
 			variables[var_cnt] = str[i];
 		else
 			values[var_cnt++]  = str[i];
@@ -234,7 +238,7 @@ void Create_Expession(char** str, int str_cnt)
 	{
 		tmp = strstr(str[str_cnt], variables[i]);
 
-		if(tmp != nullptr)
+		if (tmp != nullptr)
 		{
 			sprintf(substring, "%s", tmp + strlen(variables[i]));
 			memset(tmp, 0, strlen(tmp));
