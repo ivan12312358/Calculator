@@ -1,5 +1,3 @@
-
-// add comments in .h explaining usage
 enum functions 
 {
 	SIN = 1, COS,	TAN,
